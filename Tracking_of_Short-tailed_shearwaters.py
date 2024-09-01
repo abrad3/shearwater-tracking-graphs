@@ -6,6 +6,7 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
 import matplotlib.pyplot as plt
+import geodatasets
 
 try:
     # Python 3
@@ -59,14 +60,13 @@ if __name__ == '__main__':
     query = "SELECT * FROM Shearwater;"
 
 
-    street_map = gpd.read_file('shapefiles-antarctica/Expert-defined-Bioregions/Bioregions_V2_PS.shp')
+    #street_map = gpd.read_file('shapefiles-antarctica/Expert-defined-Bioregions/Bioregions_V2_PS.shp')
     df = pd.read_sql(query, con)
     geometry = [Point(xy) for xy in zip(df['Long'], df['Lat'])]
     geo_df = gpd.GeoDataFrame(df, crs="EPSG:4326", geometry=geometry)
-    print(geo_df.head())
-    fig, ax = plt.subplots()
-    street_map.plot(ax=ax, alpha=0.4, color='grey')
-    geo_df[geo_df['AnimalID'] == "15-2012"].plot(ax=ax,
+    #street_map.plot(ax=ax, alpha=0.4, color='grey')
+    world = gpd.read_file(geodatasets.data.naturalearth.land['url'])
+    geo_df[geo_df['AnimalID'] == "15-2012"].plot(ax=world.plot(figsize=(10,6)),
                                                 markersize=20,
                                                 color='blue',
                                                 marker='o',
