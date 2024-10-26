@@ -42,7 +42,6 @@ def setup_db():
             );
         """)
         res = cur.execute("SELECT name FROM sqlite_master")
-        print(res.fetchone())
     except sqlite3.Error as e:
         print(e)
 
@@ -53,6 +52,11 @@ def load_data(cur, data):
         #print(type(row['animal_id']))
         sqlinsert = "INSERT INTO Shearwater VALUES(?,?,?,?,?)"
         cur.execute(sqlinsert, (row['animal_id'], datetime[0], datetime[1], row['longitude'], row['latitude']))
+
+def generate_colour(uniqueID: str, colourList: zip):
+    for z in colourList:
+        if uniqueID == z[0]:
+            return z[1]
 
 if __name__ == '__main__':
     setup_db()
@@ -67,14 +71,20 @@ if __name__ == '__main__':
     print(uniqueBirdIDs)
     query = "SELECT * FROM Shearwater;"
     df = pd.read_sql(query, con)
+    cList = list(zip(uniqueBirdIDs, cm.rainbow(np.linspace(0,1, len(uniqueBirdIDs)))))
+    df['Colour'] = df['AnimalID'].apply(lambda x: generate_colour(uniqueID=x, colourList=cList))
     geometry = [Point(xy) for xy in zip(df['Long'], df['Lat'])]
     geo_df = gpd.GeoDataFrame(df, crs="EPSG:4326", geometry=geometry)
     world = gpd.read_file(geodatasets.data.naturalearth.land['url'])
-    colours = cm.rainbow(np.linspace(0,1), len(uniqueBirdIDs))
     
-    for i, c in zip(uniqueBirdIDs, colours):
-        geo_df[geo_df['AnimalID'] == i].plot(ax=world.plot(figsize=(10,6)),
-                                                markersize=20,
-                                                color = c,
-                                                marker='o',
-                                                label=i)
+    fig, ax = plt.subplots(figsize=(8,6))
+    world.plot(color="lightgrey",ax=ax)
+    for c,d in df.groupby(by='AnimalID'):
+        plt.scatter(d['Long'], d['Lat'],color=d['Colour'])
+    plt.show()
+    #for i, c in zip(uniqueBirdIDs, colours):
+      #  geo_df[geo_df['AnimalID'] == i].plot(ax=world.plot(figsize=(10,6)),
+      #                                          markersize=20,
+      #                                          color = c,
+      #                                          marker='o',
+      #                                          label=i)
